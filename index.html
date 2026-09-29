@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<title>Background Check Authorization</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=IBM+Plex+Mono:wght@400;500;700&family=Inter:wght@400;500;600&family=Libre+Franklin:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<style>
+  :root {
+    --ink: #16203A;
+    --slate: #1B2A4A;
+    --slate-light: #2E4270;
+    --amber: #E8963C;
+    --amber-deep: #C97418;
+    --paper: #F6F5F2;
+    --card: #FFFFFF;
+    --line: #DDDCD6;
+    --muted: #6B7178;
+    --danger: #B3392C;
+    --danger-bg: #FBEAE7;
+    --success: #2F7A5C;
+    --success-bg: #E9F3EE;
+    --notice-bg: #FFF3E2;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(22,32,58,0.06), 0 8px 24px -12px rgba(22,32,58,0.15);
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  body {
+    margin: 0;
+    background: var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: -1px -1px;
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px 16px 64px;
+  }
+  .masthead { width: 100%; max-width: 720px; margin-bottom: 20px; }
+  .masthead-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .masthead h1 { font-family: 'Libre Franklin', sans-serif; font-weight: 800; font-size: clamp(22px, 4vw, 28px); letter-spacing: -0.01em; margin: 0; color: var(--slate); }
+  .case-id { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--muted); background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 4px 9px; white-space: nowrap; }
+  .masthead p.sub { margin: 6px 0 0; color: var(--muted); font-size: 14.5px; }
+  .stepper { width: 100%; max-width: 720px; display: flex; gap: 4px; margin-bottom: 22px; }
+  .step-seg { flex: 1; height: 5px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+  .step-seg.done { background: var(--slate); }
+  .step-seg.current { background: var(--line); }
+  .step-seg.current::after { content: ''; position: absolute; inset: 0; background: var(--amber); width: 45%; border-radius: 3px; }
+  .step-label-row { width: 100%; max-width: 720px; display: flex; justify-content: space-between; margin-bottom: 24px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .card { width: 100%; max-width: 720px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 32px clamp(20px, 5vw, 40px); animation: rise 0.35s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--amber-deep); margin: 0 0 6px; }
+  h2.screen-title { font-family: 'Libre Franklin', sans-serif; font-weight: 700; font-size: 22px; margin: 0 0 6px; color: var(--slate); }
+  p.screen-desc { margin: 0 0 26px; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+  .field { margin-bottom: 20px; }
+  .field-row { display: flex; gap: 16px; }
+  .field-row .field { flex: 1; min-width: 0; }
+  .field-row .field.narrow { flex: 0 0 110px; }
+  @media (max-width: 520px) { .field-row { flex-direction: column; gap: 0; } .field-row .field.narrow { flex: 1; } }
+  label { display: block; font-size: 13.5px; font-weight: 600; color: var(--slate); margin-bottom: 6px; }
+  label .req { color: var(--danger); margin-left: 2px; }
+  label .opt { color: var(--muted); font-weight: 500; margin-left: 4px; font-size: 12px; text-transform: none; }
+  input[type="text"], input[type="tel"], input[type="email"], input[type="date"], input[type="number"], textarea, select {
+    width: 100%; font-family: 'Inter', sans-serif; font-size: 15px; padding: 11px 13px;
+    border: 1.5px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--slate-light); background: var(--card); }
+  input:disabled { opacity: 0.55; cursor: not-allowed; }
+  .field.invalid input, .field.invalid select { border-color: var(--danger); background: var(--danger-bg); }
+  .field-error { display: none; color: var(--danger); font-size: 12.5px; margin-top: 5px; }
+  .field.invalid .field-error { display: block; }
+  .checkline { display: flex; align-items: flex-start; gap: 11px; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--paper); cursor: pointer; margin-bottom: 10px; transition: border-color 0.15s, background 0.15s; }
+  .checkline:hover { border-color: var(--slate-light); }
+  .checkline.checked { border-color: var(--slate); background: #EEF1F7; }
+  .checkline input { margin-top: 2px; width: 17px; height: 17px; accent-color: var(--slate); flex-shrink: 0; }
+  .checkline .ct-label { font-weight: 600; font-size: 14.5px; color: var(--ink); }
+  .checkline .ct-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .checkline.compact { padding: 10px 14px; margin: 8px 0 0; }
+  .checkline.compact .ct-label { font-size: 13.5px; }
+  .conditional { max-height: 0; overflow: hidden; transition: max-height 0.25s ease; }
+  .conditional.open { max-height: 1400px; }
+  .conditional-inner { padding-top: 14px; }
+  .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 12px; }
+  button { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14.5px; padding: 12px 22px; border-radius: 7px; border: none; cursor: pointer; transition: filter 0.15s, transform 0.1s; }
+  button:active { transform: translateY(1px); }
+  .btn-primary { background: var(--slate); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.12); }
+  .btn-primary:focus-visible, .btn-secondary:focus-visible, .btn-ghost:focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+  .btn-secondary { background: transparent; color: var(--slate); border: 1.5px solid var(--line); }
+  .btn-secondary:hover { border-color: var(--slate); }
+  .btn-ghost { background: transparent; color: var(--muted); font-weight: 500; }
+  .btn-submit { background: var(--amber-deep); color: #fff; }
+  .btn-submit:hover { filter: brightness(1.1); }
+  .btn-submit:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+  .home-icon { width: 52px; height: 52px; border-radius: 12px; background: var(--slate); display: flex; align-items: center; justify-content: center; margin-bottom: 18px; }
+  .home-icon svg { width: 26px; height: 26px; }
+  .home-list { margin: 0 0 8px; padding: 0; list-style: none; }
+  .home-list li { display: flex; gap: 10px; font-size: 14px; line-height: 1.5; padding: 7px 0; color: var(--ink); border-bottom: 1px solid var(--line); }
+  .home-list li:last-child { border-bottom: none; }
+  .home-list .n { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--amber-deep); font-weight: 700; padding-top: 2px; }
+  .disclaimer-box { background: var(--notice-bg); border: 1.5px solid var(--amber); border-radius: 8px; padding: 16px 18px; margin-bottom: 24px; font-size: 13.5px; line-height: 1.6; color: var(--ink); }
+  .mini-callout { background: var(--notice-bg); border-left: 3px solid var(--amber); border-radius: 4px; padding: 8px 12px; margin: 0 0 20px; font-size: 12.5px; line-height: 1.5; color: var(--ink); }
+  .disclaimer-box .dl-title, .agreement-gate .dl-title { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--amber-deep); font-weight: 700; margin-bottom: 8px; }
+  .agreement-gate { background: var(--notice-bg); border: 1.5px solid var(--amber); border-radius: 8px; padding: 18px 20px; margin-bottom: 24px; }
+  .agreement-gate p { margin: 0 0 14px; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
+  .agreement-gate.accepted { background: var(--success-bg); border-color: var(--success); }
+  .agreement-gate.accepted .dl-title { color: var(--success); }
+  .agreement-gate .accepted-note { font-size: 13px; color: var(--ink); display: flex; align-items: center; gap: 8px; margin: 0; }
+  .agreement-gate .accepted-note .check { width: 20px; height: 20px; border-radius: 50%; background: var(--success); color: #fff; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; }
+  .agreement-reopen { background: none; border: none; color: var(--slate-light); font-weight: 600; font-size: 12.5px; cursor: pointer; padding: 0; margin-top: 8px; }
+  .signature-lock-overlay { position: absolute; inset: 0; background: rgba(246,245,242,0.88); border: 1.5px dashed var(--line); border-radius: 8px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 24px; font-size: 13.5px; color: var(--muted); font-weight: 600; z-index: 5; }
+  .agreement-modal { display: none; position: fixed; inset: 0; background: rgba(22,32,58,0.55); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .agreement-modal.open { display: flex; }
+  .agreement-dialog { width: 100%; max-width: 680px; max-height: 86vh; background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden; }
+  .agreement-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+  .agreement-header h3 { margin: 0; font-family: 'Libre Franklin', sans-serif; font-size: 17px; color: var(--slate); }
+  .agreement-version { margin: 3px 0 0; font-size: 11.5px; color: var(--muted); }
+  .agreement-close { background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px 8px; }
+  .agreement-scroll { flex: 1; overflow-y: auto; padding: 18px; background: var(--paper); }
+  #agreementPages { background: #fff; box-shadow: var(--shadow); border-radius: 6px; padding: 28px 30px; margin: 0 auto 14px; max-width: 620px; color: var(--ink); font-size: 13.5px; line-height: 1.6; }
+  @media (max-width: 520px) { #agreementPages { padding: 20px 16px; } }
+  #agreementPages h1 { font-family: 'Libre Franklin', sans-serif; font-size: 17px; text-align: center; margin: 0 0 4px; font-style: italic; }
+  #agreementPages h2 { font-family: 'Libre Franklin', sans-serif; font-size: 13.5px; text-align: center; margin: 0 0 18px; }
+  #agreementPages p { margin: 0 0 14px; }
+  #agreementPages .merge-field { background: var(--notice-bg); border-bottom: 1.5px solid var(--amber-deep); padding: 0 3px; font-weight: 600; color: var(--amber-deep); }
+  #agreementPages .sig-slot { border: 1.5px dashed var(--amber); border-radius: 6px; padding: 10px 12px; color: var(--muted); font-style: italic; font-size: 12.5px; margin: 0 0 14px; }
+  #agreementPages .small { font-size: 12px; color: var(--muted); }
+  .agreement-end { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 6px 0 2px; }
+  .agreement-agree-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 20px; border-top: 1.5px solid var(--line); background: var(--card); flex-shrink: 0; }
+  .agreement-agree-bar span { font-size: 13px; color: var(--muted); }
+  .rv-section { margin-bottom: 22px; }
+  .rv-section h4 { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--amber-deep); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin: 0 0 10px; display: flex; justify-content: space-between; align-items: baseline; }
+  .rv-row { display: flex; justify-content: space-between; gap: 16px; padding: 5px 0; font-size: 14px; }
+  .rv-row .k { color: var(--muted); }
+  .rv-row .v { color: var(--ink); font-weight: 500; text-align: right; max-width: 60%; overflow-wrap: anywhere; }
+  .rv-edit { font-size: 12px; color: var(--slate-light); background: none; border: none; cursor: pointer; padding: 0; font-weight: 600; text-transform: none; letter-spacing: 0; font-family: 'Inter', sans-serif; }
+  .success-wrap { text-align: center; padding: 20px 0; }
+  .success-check { width: 64px; height: 64px; border-radius: 50%; background: var(--success-bg); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+  .sig-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .sig-tab { padding: 8px 16px; border-radius: 7px; border: 1.5px solid var(--line); background: var(--paper); font-weight: 600; font-size: 13.5px; cursor: pointer; color: var(--muted); font-family: 'Inter', sans-serif; }
+  .sig-tab.active { background: var(--slate); color: #fff; border-color: var(--slate); }
+  .sig-canvas-wrap { position: relative; }
+  .sig-canvas { width: 100%; height: 170px; display: block; border: 1.5px solid var(--line); border-radius: 8px; background: #fff; touch-action: none; cursor: crosshair; }
+  .sig-canvas-placeholder { position: absolute; left: 16px; bottom: 14px; color: var(--muted); font-size: 13px; pointer-events: none; font-style: italic; }
+  .sig-actions { margin-top: 10px; display: flex; justify-content: flex-end; }
+  .sig-typed-input { width: 100%; font-family: 'Dancing Script', cursive; font-size: 32px; padding: 16px 14px 10px; border: none; border-bottom: 2px solid var(--slate); background: #fff; color: var(--ink); border-radius: 6px 6px 0 0; }
+  .sig-typed-input:focus { outline: none; border-color: var(--amber); }
+  .sig-timestamp-note { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .sig-block { position: relative; margin-bottom: 20px; }
+  .hp-field { position: absolute; left: -9999px; top: -9999px; opacity: 0; height: 0; overflow: hidden; }
+  .error-banner { background: var(--danger-bg); color: var(--danger); border-radius: 7px; padding: 10px 14px; font-size: 13.5px; margin-bottom: 16px; display: none; }
+  .error-banner.show { display: block; }
+  .helper-note { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .secret-wrap { position: relative; }
+  .secret-wrap input { padding-right: 64px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.04em; }
+  .secret-wrap input.masked { -webkit-text-security: disc; text-security: disc; }
+  .secret-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--slate-light); font-size: 12.5px; padding: 6px 8px; }
+  .lock-note { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: -6px 0 22px; }
+  .lock-note svg { flex-shrink: 0; margin-top: 2px; }
+  .turnstile-wrap { margin: 4px 0 8px; min-height: 65px; }
+  footer { margin-top: 28px; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="masthead-row">
+    <h1>Background Check Authorization</h1>
+    <span class="case-id" id="caseIdBadge">DRAFT · UNSAVED</span>
+  </div>
+  <p class="sub">LaborChex consumer report authorization for Capital City Beverages / F.E.B. Distributing. No login required.</p>
+</div>
+
+<div class="stepper" id="stepper"></div>
+<div class="step-label-row" id="stepLabelRow">
+  <span id="stepLabelLeft">Start</span>
+  <span id="stepLabelRight">1 of 7</span>
+</div>
+
+<main class="card" id="card">
+<form id="authForm" novalidate autocomplete="off">
+
+  <!-- Honeypot (bots fill this; people never see it) -->
+  <div class="hp-field" aria-hidden="true">
+    <label for="website">Website</label>
+    <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+  </div>
+
+  <!-- ============ 1. START ============ -->
+  <section class="screen active" data-screen="home">
+    <div class="home-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L4.5 6V11.5C4.5 16 7.7 19.9 12 21C16.3 19.9 19.5 16 19.5 11.5V6L12 3Z" stroke="#F6F5F2" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.8 12.2L11 14.4L15.4 10" stroke="#E8963C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <p class="eyebrow">Before you start</p>
+    <h2 class="screen-title">Authorize your background check</h2>
+    <p class="screen-desc">As part of your application, we need your permission for LaborChex to run a background check. You'll enter your information, read the authorization, and sign it here. There's nothing to print or email back. It takes about 5 minutes.</p>
+    <ul class="home-list">
+      <li><span class="n">01</span><span>Have your <strong>driver's license</strong> and <strong>Social Security number</strong> handy.</span></li>
+      <li><span class="n">02</span><span>You'll review the full authorization with your information filled in before you sign.</span></li>
+      <li><span class="n">03</span><span>A copy of your signed authorization will be emailed to you, with your SSN masked.</span></li>
+    </ul>
+    <div class="btn-row">
+      <span></span>
+      <button type="button" class="btn-primary" data-next>Start Authorization →</button>
+    </div>
+  </section>
+
+  <!-- ============ 2. NAME & CONTACT ============ -->
+  <section class="screen" data-screen="contact" data-label="Name &amp; Contact">
+    <p class="eyebrow">Step 1 · About you</p>
+    <h2 class="screen-title">Your name and contact info</h2>
+    <p class="screen-desc">Use your full legal name as it appears on your government ID.</p>
+    <div class="field-row">
+      <div class="field">
+        <label for="firstName">First name<span class="req">*</span></label>
+        <input type="text" id="firstName" data-req autocomplete="given-name" maxlength="50">
+        <div class="field-error">Enter your first name.</div>
+      </div>
+      <div class="field">
+        <label for="lastName">Last name<span class="req">*</span></label>
+        <input type="text" id="lastName" data-req autocomplete="family-name" maxlength="50">
+        <div class="field-error">Enter your last name.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="email">Email<span class="req">*</span></label>
+      <input type="email" id="email" data-req autocomplete="email" maxlength="100" placeholder="name@example.com">
+      <div class="field-error">Enter a valid email address.</div>
+      <div class="helper-note">Your signed copy will be sent here.</div>
+    </div>
+    <div class="field">
+      <label for="phone">Phone number<span class="req">*</span></label>
+      <input type="tel" id="phone" data-req autocomplete="tel" inputmode="tel" maxlength="14" placeholder="(601) 555-0123">
+      <div class="field-error">Enter a 10-digit phone number.</div>
+    </div>
+    <div class="field">
+      <label for="otherNames">Other names you've been known by or worked under</label>
+      <input type="text" id="otherNames" maxlength="200" placeholder="e.g. maiden name, previous married name">
+      <div class="field-error">List any other names, or check "None" below.</div>
+      <div class="helper-note">Birth name, names by marriage, divorce, or adoption, or other name changes. Separate with commas. Don't repeat your current name.</div>
+      <label class="checkline compact" id="noOtherNamesLine">
+        <input type="checkbox" id="noOtherNames">
+        <div><div class="ct-label">None: I've never used another name</div></div>
+      </label>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn-secondary" data-back>← Back</button>
+      <button type="button" class="btn-primary" data-next>Continue →</button>
+    </div>
+  </section>
+
+  <!-- ============ 3. IDENTIFICATION ============ -->
+  <section class="screen" data-screen="ident" data-label="Identification">
+    <p class="eyebrow">Step 2 · Identification</p>
+    <h2 class="screen-title">Identification details</h2>
+    <p class="screen-desc">These are used only to identify you, so the report is about the right person.</p>
+    <div class="field">
+      <label for="ssn">Social Security number<span class="req">*</span></label>
+      <div class="secret-wrap">
+        <input type="text" id="ssn" class="masked" data-req inputmode="numeric" autocomplete="off" maxlength="11" placeholder="###-##-####" spellcheck="false">
+        <button type="button" class="secret-toggle" data-toggle="ssn">Show</button>
+      </div>
+      <div class="field-error">Enter a valid 9-digit SSN.</div>
+    </div>
+    <div class="field">
+      <label for="ssnConfirm">Confirm Social Security number<span class="req">*</span></label>
+      <div class="secret-wrap">
+        <input type="text" id="ssnConfirm" class="masked" data-req inputmode="numeric" autocomplete="off" maxlength="11" placeholder="###-##-####" spellcheck="false">
+        <button type="button" class="secret-toggle" data-toggle="ssnConfirm">Show</button>
+      </div>
+      <div class="field-error">SSNs don't match.</div>
+    </div>
+    <div class="lock-note">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="#6B7178" stroke-width="1.8"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="#6B7178" stroke-width="1.8"/></svg>
+      <span>Your SSN is sent securely, isn't saved in this browser, and is only seen by HR and LaborChex.</span>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="dob">Date of birth<span class="req">*</span></label>
+        <input type="date" id="dob" data-req autocomplete="bday">
+        <div class="field-error">Enter a valid date of birth.</div>
+      </div>
+      <div class="field">
+        <label for="sex">Sex<span class="req">*</span></label>
+        <select id="sex" data-req>
+          <option value="">Select…</option>
+          <option>Male</option>
+          <option>Female</option>
+        </select>
+        <div class="field-error">Select one.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="race">Race<span class="opt">(optional)</span></label>
+      <select id="race">
+        <option value="">Select…</option>
+        <option>American Indian or Alaska Native</option>
+        <option>Asian</option>
+        <option>Black or African American</option>
+        <option>Hispanic or Latino</option>
+        <option>Native Hawaiian or Other Pacific Islander</option>
+        <option>White</option>
+        <option>Two or More Races</option>
+        <option>Prefer not to say</option>
+      </select>
+    </div>
+    <p class="mini-callout">Race, sex, date of birth, other names, and SSN are used only for identification purposes to ensure accuracy of the report.</p>
+    <div class="btn-row">
+      <button type="button" class="btn-secondary" data-back>← Back</button>
+      <button type="button" class="btn-primary" data-next>Continue →</button>
+    </div>
+  </section>
+
+  <!-- ============ 4. ADDRESSES ============ -->
+  <section class="screen" data-screen="address" data-label="Addresses">
+    <p class="eyebrow">Step 3 · Addresses</p>
+    <h2 class="screen-title">Where you live</h2>
+    <p class="screen-desc">Your current home address and the one before it.</p>
+    <div class="field">
+      <label for="addr">Current street address<span class="req">*</span></label>
+      <input type="text" id="addr" data-req autocomplete="address-line1" maxlength="120">
+      <div class="field-error">Enter your street address.</div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="city">City<span class="req">*</span></label>
+        <input type="text" id="city" data-req autocomplete="address-level2" maxlength="60">
+        <div class="field-error">Enter a city.</div>
+      </div>
+      <div class="field narrow">
+        <label for="state">State<span class="req">*</span></label>
+        <select id="state" data-req data-states data-default="MS"></select>
+        <div class="field-error">Select.</div>
+      </div>
+      <div class="field narrow">
+        <label for="zip">ZIP<span class="req">*</span></label>
+        <input type="text" id="zip" data-req inputmode="numeric" autocomplete="postal-code" maxlength="10">
+        <div class="field-error">5-digit ZIP.</div>
+      </div>
+    </div>
+
+    <label class="checkline" id="samePrevLine">
+      <input type="checkbox" id="samePrev">
+      <div>
+        <div class="ct-label">I haven't lived anywhere else in the last 7 years</div>
+        <div class="ct-sub">Your previous address will be recorded as "Same as current".</div>
+      </div>
+    </label>
+    <div class="conditional open" id="prevBlock">
+      <div class="conditional-inner">
+        <div class="field">
+          <label for="prevAddr">Previous street address<span class="req">*</span></label>
+          <input type="text" id="prevAddr" data-req maxlength="120">
+          <div class="field-error">Enter your previous street address.</div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="prevCity">City<span class="req">*</span></label>
+            <input type="text" id="prevCity" data-req maxlength="60">
+            <div class="field-error">Enter a city.</div>
+          </div>
+          <div class="field narrow">
+            <label for="prevState">State<span class="req">*</span></label>
+            <select id="prevState" data-req data-states data-default="MS"></select>
+            <div class="field-error">Select.</div>
+          </div>
+          <div class="field narrow">
+            <label for="prevZip">ZIP<span class="req">*</span></label>
+            <input type="text" id="prevZip" data-req inputmode="numeric" maxlength="10">
+            <div class="field-error">5-digit ZIP.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn-secondary" data-back>← Back</button>
+      <button type="button" class="btn-primary" data-next>Continue →</button>
+    </div>
+  </section>
+
+  <!-- ============ 5. DRIVER'S LICENSE ============ -->
+  <section class="screen" data-screen="license" data-label="Driver's License">
+    <p class="eyebrow">Step 4 · Driver's license</p>
+    <h2 class="screen-title">Driver's license</h2>
+    <p class="screen-desc">Enter it exactly as printed on your license. It's used to check your driving record.</p>
+    <label class="checkline" id="noDLLine">
+      <input type="checkbox" id="noDL">
+      <div>
+        <div class="ct-label">I don't have a driver's license</div>
+        <div class="ct-sub">Only check this if you have no valid license from any state.</div>
+      </div>
+    </label>
+    <div class="conditional open" id="dlBlock">
+      <div class="conditional-inner">
+        <div class="field">
+          <label for="dlName">Exact name on license<span class="req">*</span></label>
+          <input type="text" id="dlName" data-req maxlength="100">
+          <div class="field-error">Enter the name exactly as it appears on your license.</div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="dlNumber">License number<span class="req">*</span></label>
+            <div class="secret-wrap">
+              <input type="text" id="dlNumber" class="masked" data-req autocomplete="off" maxlength="20" spellcheck="false">
+              <button type="button" class="secret-toggle" data-toggle="dlNumber">Show</button>
+            </div>
+            <div class="field-error">Enter your license number.</div>
+          </div>
+          <div class="field narrow">
+            <label for="dlState">State<span class="req">*</span></label>
+            <select id="dlState" data-req data-states data-default="MS"></select>
+            <div class="field-error">Select.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn-secondary" data-back>← Back</button>
+      <button type="button" class="btn-primary" data-next>Review &amp; Sign →</button>
+    </div>
+  </section>
+
+  <!-- ============ 6. REVIEW & SIGN ============ -->
+  <section class="screen" data-screen="sign" data-label="Review &amp; Sign">
+    <p class="eyebrow">Step 5 · Review &amp; sign</p>
+    <h2 class="screen-title">Review and sign</h2>
+    <p class="screen-desc">Check your information, read the authorization, then sign.</p>
+
+    <div id="reviewSummary"></div>
+
+    <div class="agreement-gate" id="agreementGate">
+      <div class="dl-title" id="gateTitle">Authorization: read before signing</div>
+      <div id="gatePending">
+        <p>Open the LaborChex authorization, filled in with your information. Scroll to the end to agree.</p>
+        <button type="button" class="btn-primary" id="openAgreement">Read Authorization</button>
+      </div>
+      <div id="gateAccepted" hidden>
+        <p class="accepted-note"><span class="check">✓</span><span id="acceptedText">You read and agreed to the authorization.</span></p>
+        <button type="button" class="agreement-reopen" id="reopenAgreement">View authorization again</button>
+      </div>
+    </div>
+
+    <div class="sig-block">
+      <label>Your signature<span class="req">*</span></label>
+      <div class="sig-tabs" role="tablist">
+        <button type="button" class="sig-tab active" data-sigmode="draw" role="tab">Draw</button>
+        <button type="button" class="sig-tab" data-sigmode="type" role="tab">Type</button>
+      </div>
+      <div id="sigDrawPane">
+        <div class="sig-canvas-wrap">
+          <canvas class="sig-canvas" id="sigCanvas" aria-label="Signature pad"></canvas>
+          <span class="sig-canvas-placeholder" id="sigPlaceholder">Sign here with your finger or mouse</span>
+        </div>
+        <div class="sig-actions"><button type="button" class="btn-ghost" id="sigClear">Clear</button></div>
+      </div>
+      <div id="sigTypePane" hidden>
+        <input type="text" class="sig-typed-input" id="sigTyped" maxlength="60" placeholder="Type your full name" autocomplete="off">
+      </div>
+      <div class="sig-timestamp-note" id="sigNote">Your signature will be dated automatically when you submit.</div>
+      <div class="signature-lock-overlay" id="sigLock">Read and agree to the authorization above to unlock your signature.</div>
+    </div>
+
+    <div class="turnstile-wrap">
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAEdNwikuVc8WhWCj" data-callback="onTurnstileOK" data-expired-callback="onTurnstileExpired" data-error-callback="onTurnstileError"></div>
+    </div>
+
+    <div class="error-banner" id="submitError"></div>
+
+    <div class="btn-row">
+      <button type="button" class="btn-secondary" data-back>← Back</button>
+      <button type="button" class="btn-submit" id="submitBtn" disabled>Sign &amp; Submit</button>
+    </div>
+  </section>
+
+  <!-- ============ 7. DONE ============ -->
+  <section class="screen" data-screen="done">
+    <div class="success-wrap">
+      <div class="success-check">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M5 12.5L10 17.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <p class="eyebrow">Submitted</p>
+      <h2 class="screen-title">Thank you. Your authorization is signed.</h2>
+      <p class="screen-desc" id="doneText">A copy has been emailed to you. HR will be in touch about next steps. You can close this page.</p>
+      <p class="case-id" style="display:inline-block" id="doneRef"></p>
+    </div>
+  </section>
+
+</form>
+</main>
+
+<footer>
+  LaborChex Inc. · 1929 Spillway Road, Suite D, Brandon, MS 39048 · 1-800-880-0366<br>
+  Questions? Contact Human Resources, F.E.B. Distributing Co., Inc.
+</footer>
+
+<!-- Authorization viewer -->
+<div class="agreement-modal" id="agreementModal" role="dialog" aria-modal="true" aria-labelledby="agreementTitle">
+  <div class="agreement-dialog">
+    <div class="agreement-header">
+      <div>
+        <h3 id="agreementTitle">Authorization to Procure a Consumer Report</h3>
+        <p class="agreement-version" id="agreementVersionLabel"></p>
+      </div>
+      <button type="button" class="agreement-close" id="agreementClose" aria-label="Close">✕</button>
+    </div>
+    <div class="agreement-scroll" id="agreementScroll">
+      <div id="agreementPages"></div>
+      <div class="agreement-end" id="agreementEnd">End of document</div>
+    </div>
+    <div class="agreement-agree-bar">
+      <span id="agreeHint">Scroll to the end to continue.</span>
+      <button type="button" class="btn-submit" id="agreeBtn" disabled>I Agree</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================= CONFIG ================= */
+  // Paste the HTTP trigger URL of the "Background Authorization Intake" flow here.
+  var FLOW_URL = 'PASTE_POWER_AUTOMATE_HTTP_TRIGGER_URL_HERE';
+  // Bump this whenever the authorization wording changes. It is printed on the signed PDF.
+  var DOC_VERSION = 'LaborChex Authorization v2026-09';
+  var EMPLOYER = 'Capital City Beverages Inc./F.E.B. Distributing Co., Inc.';
+
+  var STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var screens = [].slice.call(document.querySelectorAll('.screen'));
+  var current = 0;
+  var turnstileToken = '';
+  var agreed = false;
+  var agreedAt = null;
+  var submitting = false;
+
+  /* ================= SETUP ================= */
+  document.querySelectorAll('select[data-states]').forEach(function (sel) {
+    var def = sel.getAttribute('data-default') || '';
+    sel.innerHTML = '<option value="">—</option>' + STATES.map(function (s) {
+      return '<option' + (s === def ? ' selected' : '') + '>' + s + '</option>';
+    }).join('');
+  });
+  $('agreementVersionLabel').textContent = DOC_VERSION;
+
+  var stepper = $('stepper');
+  stepper.innerHTML = screens.map(function () { return '<div class="step-seg"></div>'; }).join('');
+
+  function renderStepper() {
+    [].forEach.call(stepper.children, function (seg, i) {
+      seg.className = 'step-seg' + (i < current ? ' done' : i === current ? ' current' : '');
+    });
+    var s = screens[current];
+    var name = s.getAttribute('data-screen');
+    $('stepLabelLeft').textContent = name === 'home' ? 'Start' : name === 'done' ? 'Complete' : (s.getAttribute('data-label') || '');
+    $('stepLabelRight').textContent = (current + 1) + ' of ' + screens.length;
+  }
+
+  function show(i) {
+    screens[current].classList.remove('active');
+    current = i;
+    screens[current].classList.add('active');
+    renderStepper();
+    var card = $('card');
+    card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (screens[current].getAttribute('data-screen') === 'sign') onEnterSign();
+  }
+  function goTo(name) {
+    for (var i = 0; i < screens.length; i++) if (screens[i].getAttribute('data-screen') === name) return show(i);
+  }
+
+  document.querySelectorAll('[data-next]').forEach(function (b) {
+    b.addEventListener('click', function () { if (validateScreen(screens[current])) show(current + 1); });
+  });
+  document.querySelectorAll('[data-back]').forEach(function (b) {
+    b.addEventListener('click', function () { show(current - 1); });
+  });
+
+  /* ================= INPUT FORMATTING ================= */
+  function digits(v) { return (v || '').replace(/\D/g, ''); }
+  function fmtSSN(v) {
+    var d = digits(v).slice(0, 9);
+    if (d.length > 5) return d.slice(0, 3) + '-' + d.slice(3, 5) + '-' + d.slice(5);
+    if (d.length > 3) return d.slice(0, 3) + '-' + d.slice(3);
+    return d;
+  }
+  function fmtPhone(v) {
+    var d = digits(v);
+    if (d.length === 11 && d[0] === '1') d = d.slice(1);
+    d = d.slice(0, 10);
+    if (d.length > 6) return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6);
+    if (d.length > 3) return '(' + d.slice(0, 3) + ') ' + d.slice(3);
+    return d;
+  }
+  ['ssn', 'ssnConfirm'].forEach(function (id) {
+    $(id).addEventListener('input', function (e) { e.target.value = fmtSSN(e.target.value); clearInvalid(e.target); });
+  });
+  $('phone').addEventListener('input', function (e) { e.target.value = fmtPhone(e.target.value); });
+  ['zip', 'prevZip'].forEach(function (id) {
+    $(id).addEventListener('input', function (e) {
+      var d = digits(e.target.value).slice(0, 9);
+      e.target.value = d.length > 5 ? d.slice(0, 5) + '-' + d.slice(5) : d;
+    });
+  });
+  document.querySelectorAll('[data-toggle]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var inp = $(btn.getAttribute('data-toggle'));
+      var masked = inp.classList.toggle('masked');
+      btn.textContent = masked ? 'Show' : 'Hide';
+    });
+  });
+
+  // Pre-fill DL name from first/last the first time the license screen is visited
+  var dlNameTouched = false;
+  $('dlName').addEventListener('input', function () { dlNameTouched = true; });
+
+  /* ================= CHECKBOX TOGGLES ================= */
+  function bindToggle(checkId, lineId, blockId, disableIds, onChange) {
+    var cb = $(checkId), line = $(lineId), block = blockId ? $(blockId) : null;
+    function apply() {
+      line.classList.toggle('checked', cb.checked);
+      if (block) block.classList.toggle('open', !cb.checked);
+      (disableIds || []).forEach(function (id) {
+        var el = $(id);
+        el.disabled = cb.checked;
+        if (cb.checked) clearInvalid(el);
+      });
+      if (onChange) onChange(cb.checked);
+    }
+    cb.addEventListener('change', apply);
+    apply();
+  }
+  bindToggle('samePrev', 'samePrevLine', 'prevBlock', ['prevAddr', 'prevCity', 'prevState', 'prevZip']);
+  bindToggle('noDL', 'noDLLine', 'dlBlock', ['dlName', 'dlNumber', 'dlState']);
+  bindToggle('noOtherNames', 'noOtherNamesLine', null, ['otherNames'], function (on) { if (on) $('otherNames').value = ''; });
+
+  /* ================= VALIDATION ================= */
+  function fieldOf(el) { return el.closest('.field'); }
+  function setInvalid(el, msg) {
+    var f = fieldOf(el); if (!f) return;
+    f.classList.add('invalid');
+    if (msg) { var e = f.querySelector('.field-error'); if (e) e.textContent = msg; }
+  }
+  function clearInvalid(el) { var f = fieldOf(el); if (f) f.classList.remove('invalid'); }
+  document.addEventListener('input', function (e) { if (e.target.matches('input,select')) clearInvalid(e.target); });
+  document.addEventListener('change', function (e) { if (e.target.matches('select')) clearInvalid(e.target); });
+
+  function validSSN(v) {
+    var d = digits(v);
+    if (d.length !== 9) return false;
+    var a = d.slice(0, 3), g = d.slice(3, 5), s = d.slice(5);
+    if (a === '000' || a === '666' || a[0] === '9' || g === '00' || s === '0000') return false;
+    return true;
+  }
+  function ageOn(dobStr) {
+    var d = new Date(dobStr + 'T12:00:00'); if (isNaN(d)) return -1;
+    var n = new Date(), a = n.getFullYear() - d.getFullYear();
+    var m = n.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && n.getDate() < d.getDate())) a--;
+    return a;
+  }
+
+  function validateScreen(screen) {
+    var ok = true, first = null;
+    function fail(el, msg) { setInvalid(el, msg); ok = false; if (!first) first = el; }
+    screen.querySelectorAll('[data-req]').forEach(function (el) {
+      if (el.disabled) return;
+      if (!String(el.value).trim()) fail(el);
+    });
+    var name = screen.getAttribute('data-screen');
+    if (name === 'contact') {
+      var em = $('email').value.trim();
+      if (em && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) fail($('email'), 'Enter a valid email address.');
+      var ph = digits($('phone').value);
+      if (ph && ph.length !== 10) fail($('phone'), 'Enter a 10-digit phone number.');
+      if (!$('noOtherNames').checked && !$('otherNames').value.trim()) fail($('otherNames'), 'List any other names, or check "None" below.');
+      var full = ($('firstName').value + ' ' + $('lastName').value).trim().toLowerCase();
+      if ($('otherNames').value.trim().toLowerCase() === full || $('otherNames').value.trim().toLowerCase() === $('firstName').value.trim().toLowerCase()) {
+        fail($('otherNames'), 'Only list names other than your current name, or check "None".');
+      }
+    }
+    if (name === 'ident') {
+      if ($('ssn').value && !validSSN($('ssn').value)) fail($('ssn'), 'That doesn\'t look like a valid SSN. Check the digits.');
+      if ($('ssnConfirm').value && digits($('ssnConfirm').value) !== digits($('ssn').value)) fail($('ssnConfirm'), 'SSNs don\'t match.');
+      var dv = $('dob').value;
+      if (dv) { var a = ageOn(dv); if (a < 14 || a > 100) fail($('dob'), 'Check your date of birth.'); }
+    }
+    if (name === 'address') {
+      [['zip', true], ['prevZip', !$('samePrev').checked]].forEach(function (z) {
+        var el = $(z[0]);
+        if (z[1] && el.value && digits(el.value).length !== 5 && digits(el.value).length !== 9) fail(el, '5-digit ZIP.');
+      });
+    }
+    if (name === 'license' && !$('noDL').checked) {
+      if ($('dlNumber').value && !/^[A-Za-z0-9\- ]{4,20}$/.test($('dlNumber').value.trim())) fail($('dlNumber'), 'Letters and numbers only.');
+    }
+    if (first) { first.focus({ preventScroll: true }); first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    return ok;
+  }
+
+  // Suggest DL name when entering license screen
+  var licenseScreen = document.querySelector('[data-screen="license"]');
+  new MutationObserver(function () {
+    if (licenseScreen.classList.contains('active') && !dlNameTouched && !$('dlName').value) {
+      $('dlName').value = ($('firstName').value.trim() + ' ' + $('lastName').value.trim()).trim();
+    }
+  }).observe(licenseScreen, { attributes: true, attributeFilter: ['class'] });
+
+  /* ================= DATA ================= */
+  function v(id) { return $(id).value.trim(); }
+  function fmtDOB(iso) { if (!iso) return ''; var p = iso.split('-'); return p[1] + '/' + p[2] + '/' + p[0]; }
+  function maskSSN(s) { var d = digits(s); return d.length === 9 ? '***-**-' + d.slice(5) : ''; }
+  function collect() {
+    var same = $('samePrev').checked, noDL = $('noDL').checked;
+    return {
+      firstName: v('firstName'), lastName: v('lastName'),
+      email: v('email'), phone: v('phone'),
+      otherNames: $('noOtherNames').checked ? 'None' : v('otherNames'),
+      ssn: fmtSSN(v('ssn')),
+      dob: fmtDOB($('dob').value), sex: v('sex'), race: v('race'),
+      address: v('addr'), city: v('city'), state: v('state'), zip: v('zip'),
+      prevSameAsCurrent: same,
+      prevAddress: same ? 'Same as current' : v('prevAddr'),
+      prevCity: same ? '' : v('prevCity'), prevState: same ? '' : v('prevState'), prevZip: same ? '' : v('prevZip'),
+      noDriversLicense: noDL,
+      dlName: noDL ? 'None' : v('dlName'), dlNumber: noDL ? 'None' : v('dlNumber'), dlState: noDL ? '' : v('dlState')
+    };
+  }
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function mf(s) { return '<span class="merge-field">' + esc(s || '—') + '</span>'; }
+
+  function renderSummary(d) {
+    function row(k, val) { return '<div class="rv-row"><span class="k">' + k + '</span><span class="v">' + esc(val || '—') + '</span></div>'; }
+    function sect(title, target, rows) {
+      return '<div class="rv-section"><h4>' + title + ' <button type="button" class="rv-edit" data-edit="' + target + '">Edit</button></h4>' + rows + '</div>';
+    }
+    var prev = d.prevSameAsCurrent ? 'Same as current' : [d.prevAddress, [d.prevCity, d.prevState].filter(Boolean).join(', ') + ' ' + d.prevZip].join(', ');
+    $('reviewSummary').innerHTML =
+      sect('Name &amp; contact', 'contact', row('Name', d.firstName + ' ' + d.lastName) + row('Email', d.email) + row('Phone', d.phone) + row('Other names', d.otherNames)) +
+      sect('Identification', 'ident', row('SSN', maskSSN(d.ssn)) + row('Date of birth', d.dob) + row('Sex', d.sex) + row('Race', d.race || 'Not provided')) +
+      sect('Addresses', 'address', row('Current', d.address + ', ' + d.city + ', ' + d.state + ' ' + d.zip) + row('Previous', prev)) +
+      sect('Driver\'s license', 'license', d.noDriversLicense ? row('License', 'None') : row('Name on license', d.dlName) + row('Number', '••••' + d.dlNumber.slice(-4)) + row('State', d.dlState));
+    $('reviewSummary').querySelectorAll('[data-edit]').forEach(function (b) {
+      b.addEventListener('click', function () { goTo(b.getAttribute('data-edit')); });
+    });
+  }
+
+  function renderAgreement(d) {
+    var prevLine = d.prevSameAsCurrent ? mf('Same as current') : mf(d.prevAddress) + ' &nbsp;City, State, Zip: ' + mf(d.prevCity + ', ' + d.prevState + ' ' + d.prevZip);
+    $('agreementPages').innerHTML =
+      '<h1>LABORCHEX INC.</h1>' +
+      '<h2>AUTHORIZATION TO PROCURE A CONSUMER REPORT OR INVESTIGATIVE CONSUMER REPORT</h2>' +
+      '<p>The following person is seeking immediate employment and has fully and legally authorized you to provide employment information. Name: ' + mf(d.firstName + ' ' + d.lastName) + '. Social Security Number: ' + mf(maskSSN(d.ssn)) + '.</p>' +
+      '<p>I hereby authorize ' + esc(EMPLOYER) + ' or those authorized by them to procure consumer reports and/or investigative consumer reports on me in connection with my application for employment or any time during my employment, which shall be used solely for the purpose of evaluating me for employment, promotion, reassignment, or retention as an employee or as an independent contractor. I understand that reports may include information about my prior employment, D.O.T. commercial driver experience as outlined in Parts 382.413, 391.23, and 391.25 of the Federal Motor Carrier Safety Regulations (FMCSRs), drug screening and testing, driving records, military record, education, credit worthiness and history, character, general reputation, criminal record, and mode of living, residency, general reputation, personal characteristics, performance, experience, reasons for termination of past employment and other qualities pertinent to my qualifications for employment.</p>' +
+      '<p>I understand that this information may be obtained through a variety of sources, including, but not limited to, public records, educational institutions, financial institutions, credit bureaus, consumer reporting agencies, and personal interviews with my current and former employers, friends, neighbors, and associates. I understand that upon written request to the Human Resources Manager, I will be informed whether an investigative consumer report was requested and given information as to the nature and scope of the investigation requested. I understand that upon written request to the Human Resources Manager, a copy of this authorization will be provided to me.</p>' +
+      '<p><strong>Applicant Signature:</strong></p><div class="sig-slot">Your signature will appear here after you sign.</div>' +
+      '<p><strong>Date:</strong> Added automatically when you submit.</p>' +
+      '<p>Printed Name: ' + mf(d.firstName + ' ' + d.lastName) + '</p>' +
+      '<p>Identification Information: Other names I have been known by or worked under (for example: birth names, names by marriage, divorce, adoption, or other name changes, etc): ' + mf(d.otherNames) + '</p>' +
+      '<p>Race: ' + mf(d.race || 'Not provided') + ' &nbsp;Sex: ' + mf(d.sex) + ' &nbsp;Date of Birth: ' + mf(d.dob) + ' &nbsp;SSN: ' + mf(maskSSN(d.ssn)) + '</p>' +
+      '<p class="small">(Race, Sex, Date of Birth, Other Names and Social Security Number are used only for identification purposes to ensure accuracy of the report.) Your full SSN appears on the copy sent to HR; it\'s masked here for your privacy.</p>' +
+      '<p>Current Address: ' + mf(d.address) + ' &nbsp;City, State, Zip: ' + mf(d.city + ', ' + d.state + ' ' + d.zip) + '</p>' +
+      '<p>Previous Address: ' + prevLine + '</p>' +
+      '<p>Driver\'s License Name: ' + mf(d.dlName) + ' &nbsp;License No: ' + mf(d.noDriversLicense ? 'None' : '••••' + d.dlNumber.slice(-4)) + ' &nbsp;DL State: ' + mf(d.dlState || '—') + '</p>' +
+      '<p class="small" style="margin:0">' + esc(DOC_VERSION) + '</p>';
+  }
+
+  /* ================= SIGN SCREEN ================= */
+  var lastSnapshot = '';
+  function onEnterSign() {
+    var d = collect();
+    renderSummary(d);
+    renderAgreement(d);
+    // If info changed after agreeing, require re-reading
+    var snap = JSON.stringify(d);
+    if (agreed && snap !== lastSnapshot) setAgreed(false);
+    lastSnapshot = snap;
+    resizeCanvas();
+    refreshSubmit();
+  }
+
+  function setAgreed(on) {
+    agreed = on;
+    agreedAt = on ? new Date() : null;
+    $('agreementGate').classList.toggle('accepted', on);
+    $('gatePending').hidden = on;
+    $('gateAccepted').hidden = !on;
+    $('gateTitle').textContent = on ? 'Authorization accepted' : 'Authorization: read before signing';
+    $('sigLock').style.display = on ? 'none' : 'flex';
+    if (on) $('acceptedText').textContent = 'You read and agreed to the authorization (' + DOC_VERSION + ').';
+    refreshSubmit();
+  }
+
+  var modal = $('agreementModal'), scroller = $('agreementScroll');
+  function openAgreement() {
+    modal.classList.add('open');
+    scroller.scrollTop = 0;
+    $('agreeBtn').disabled = !agreed;
+    $('agreeHint').textContent = agreed ? 'You already agreed.' : 'Scroll to the end to continue.';
+    setTimeout(checkScrolled, 50);
+    $('agreementClose').focus();
+  }
+  function closeAgreement() { modal.classList.remove('open'); }
+  function checkScrolled() {
+    if (scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 24) {
+      $('agreeBtn').disabled = false;
+      if (!agreed) $('agreeHint').textContent = 'You reached the end.';
+    }
+  }
+  scroller.addEventListener('scroll', checkScrolled);
+  $('openAgreement').addEventListener('click', openAgreement);
+  $('reopenAgreement').addEventListener('click', openAgreement);
+  $('agreementClose').addEventListener('click', closeAgreement);
+  modal.addEventListener('click', function (e) { if (e.target === modal) closeAgreement(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('open')) closeAgreement(); });
+  $('agreeBtn').addEventListener('click', function () { if (!agreed) setAgreed(true); closeAgreement(); });
+
+  /* ================= SIGNATURE ================= */
+  var canvas = $('sigCanvas'), ctx = canvas.getContext('2d');
+  var drawing = false, hasInk = false, strokes = [], stroke = null, sigMode = 'draw';
+
+  function resizeCanvas() {
+    var r = canvas.getBoundingClientRect();
+    if (!r.width) return;
+    var dpr = Math.max(window.devicePixelRatio || 1, 1);
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    redraw();
+  }
+  function redraw() {
+    var r = canvas.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#16203A'; ctx.lineWidth = 2.4;
+    strokes.forEach(function (s) {
+      ctx.beginPath();
+      s.forEach(function (p, i) { i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); });
+      if (s.length === 1) ctx.lineTo(s[0][0] + 0.1, s[0][1] + 0.1);
+      ctx.stroke();
+    });
+  }
+  function pt(e) { var r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+  canvas.addEventListener('pointerdown', function (e) {
+    if (!agreed) return;
+    drawing = true; canvas.setPointerCapture(e.pointerId);
+    stroke = [pt(e)]; strokes.push(stroke); redraw();
+  });
+  canvas.addEventListener('pointermove', function (e) {
+    if (!drawing) return;
+    stroke.push(pt(e)); redraw();
+  });
+  function endStroke() {
+    if (!drawing) return;
+    drawing = false;
+    var len = strokes.reduce(function (n, s) { return n + s.length; }, 0);
+    hasInk = len > 8;
+    $('sigPlaceholder').style.display = strokes.length ? 'none' : '';
+    refreshSubmit();
+  }
+  canvas.addEventListener('pointerup', endStroke);
+  canvas.addEventListener('pointercancel', endStroke);
+  $('sigClear').addEventListener('click', function () {
+    strokes = []; hasInk = false; redraw();
+    $('sigPlaceholder').style.display = ''; refreshSubmit();
+  });
+  window.addEventListener('resize', function () { if (screens[current].getAttribute('data-screen') === 'sign') resizeCanvas(); });
+
+  document.querySelectorAll('.sig-tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      sigMode = t.getAttribute('data-sigmode');
+      document.querySelectorAll('.sig-tab').forEach(function (x) { x.classList.toggle('active', x === t); });
+      $('sigDrawPane').hidden = sigMode !== 'draw';
+      $('sigTypePane').hidden = sigMode !== 'type';
+      if (sigMode === 'draw') resizeCanvas();
+      refreshSubmit();
+    });
+  });
+  $('sigTyped').addEventListener('input', refreshSubmit);
+
+  function hasSignature() {
+    return sigMode === 'draw' ? hasInk : $('sigTyped').value.trim().length >= 2;
+  }
+
+  // Export signature as a cropped PNG on white (for the Word picture content control)
+  function signaturePNG() {
+    var W = 900, H = 260, out = document.createElement('canvas');
+    out.width = W; out.height = H;
+    var o = out.getContext('2d');
+    o.fillStyle = '#fff'; o.fillRect(0, 0, W, H);
+    o.strokeStyle = '#16203A'; o.fillStyle = '#16203A'; o.lineCap = 'round'; o.lineJoin = 'round';
+    if (sigMode === 'type') {
+      var txt = $('sigTyped').value.trim(), size = 120;
+      o.textBaseline = 'middle'; o.textAlign = 'center';
+      do { o.font = '600 ' + size + 'px "Dancing Script", cursive'; size -= 4; } while (o.measureText(txt).width > W - 60 && size > 30);
+      o.fillText(txt, W / 2, H / 2 + 6);
+    } else {
+      var xs = [], ys = [];
+      strokes.forEach(function (s) { s.forEach(function (p) { xs.push(p[0]); ys.push(p[1]); }); });
+      var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs), minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+      var pad = 24, bw = Math.max(maxX - minX, 1), bh = Math.max(maxY - minY, 1);
+      var scale = Math.min((W - pad * 2) / bw, (H - pad * 2) / bh, 4);
+      var ox = (W - bw * scale) / 2 - minX * scale, oy = (H - bh * scale) / 2 - minY * scale;
+      o.lineWidth = Math.max(2.4 * scale * 0.8, 3);
+      strokes.forEach(function (s) {
+        o.beginPath();
+        s.forEach(function (p, i) { var x = p[0] * scale + ox, y = p[1] * scale + oy; i ? o.lineTo(x, y) : o.moveTo(x, y); });
+        if (s.length === 1) o.lineTo(s[0][0] * scale + ox + 0.1, s[0][1] * scale + oy + 0.1);
+        o.stroke();
+      });
+    }
+    return out.toDataURL('image/png');
+  }
+
+  /* ================= TURNSTILE ================= */
+  window.onTurnstileOK = function (t) { turnstileToken = t; refreshSubmit(); };
+  window.onTurnstileExpired = function () { turnstileToken = ''; refreshSubmit(); };
+  window.onTurnstileError = function () { turnstileToken = ''; refreshSubmit(); };
+
+  function refreshSubmit() {
+    $('submitBtn').disabled = submitting || !(agreed && hasSignature() && turnstileToken);
+    var note = !agreed ? 'Read and agree to the authorization first.'
+      : !hasSignature() ? 'Sign above to continue.'
+      : !turnstileToken ? 'Waiting for the security check below…'
+      : 'Your signature will be dated automatically when you submit.';
+    $('sigNote').textContent = note;
+  }
+
+  /* ================= SUBMIT ================= */
+  function showError(msg) { var b = $('submitError'); b.textContent = msg; b.classList.add('show'); }
+
+  $('submitBtn').addEventListener('click', function () {
+    $('submitError').classList.remove('show');
+    // Re-validate every data screen in case something was edited
+    for (var i = 1; i < screens.length - 2; i++) {
+      if (!validateScreen(screens[i])) { show(i); validateScreen(screens[i]); return; }
+    }
+    if (FLOW_URL.indexOf('PASTE_') === 0) { showError('This form isn\'t connected yet. Paste the flow URL into FLOW_URL.'); return; }
+
+    var d = collect();
+    var now = new Date();
+    var payload = Object.assign({}, d, {
+      signatureImage: signaturePNG().split(',')[1],     // base64 PNG, no data: prefix
+      signatureMethod: sigMode === 'draw' ? 'drawn' : 'typed',
+      signedAtUtc: now.toISOString(),
+      agreedAtUtc: agreedAt ? agreedAt.toISOString() : now.toISOString(),
+      documentVersion: DOC_VERSION,
+      userAgent: navigator.userAgent.slice(0, 250),
+      website: $('website').value,                     // honeypot: must be empty
+      turnstileToken: turnstileToken
+    });
+
+    submitting = true; refreshSubmit();
+    $('submitBtn').textContent = 'Submitting…';
+
+    fetch(FLOW_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function (r) {
+        return r.text().then(function (t) {
+          var j = {}; try { j = JSON.parse(t); } catch (e) {}
+          if (!r.ok || j.ok === false) throw new Error(j.message || ('Server responded ' + r.status));
+          return j;
+        });
+      })
+      .then(function (j) {
+        var ref = j.referenceId || ('BG-' + now.toISOString().slice(0, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase());
+        $('caseIdBadge').textContent = ref;
+        $('doneRef').textContent = 'Reference: ' + ref;
+        $('doneText').textContent = 'A copy has been emailed to ' + d.email + '. HR will be in touch about next steps. You can close this page.';
+        wipe();
+        goTo('done');
+      })
+      .catch(function (err) {
+        showError('We couldn\'t submit your authorization. Please try again in a moment. If it keeps failing, contact HR. (' + err.message + ')');
+        if (window.turnstile) { try { window.turnstile.reset(); } catch (e) {} }
+        turnstileToken = '';
+      })
+      .then(function () {
+        submitting = false;
+        $('submitBtn').textContent = 'Sign & Submit';
+        refreshSubmit();
+      });
+  });
+
+  // Clear sensitive values from the page once submitted
+  function wipe() {
+    $('authForm').querySelectorAll('input').forEach(function (i) { if (i.type === 'checkbox') i.checked = false; else i.value = ''; });
+    strokes = []; hasInk = false;
+    $('agreementPages').innerHTML = ''; $('reviewSummary').innerHTML = '';
+  }
+
+  window.addEventListener('beforeunload', function (e) {
+    var s = screens[current].getAttribute('data-screen');
+    if (s !== 'home' && s !== 'done') { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  renderStepper();
+})();
+</script>
+</body>
+</html>
