@@ -703,8 +703,8 @@
     function search(q) {
       if (ctrl) ctrl.abort();
       ctrl = ('AbortController' in window) ? new AbortController() : null;
-      var url = 'https://api.geoapify.com/v1/geocode/autocomplete?format=json&limit=5&type=street,amenity,building' +
-        '&filter=countrycode:us&bias=countrycode:us&lang=en&text=' + encodeURIComponent(q) + '&apiKey=' + encodeURIComponent(GEOAPIFY_KEY);
+      var url = 'https://api.geoapify.com/v1/geocode/autocomplete?format=json&limit=5' +
+        '&filter=countrycode:us&lang=en&text=' + encodeURIComponent(q) + '&apiKey=' + encodeURIComponent(GEOAPIFY_KEY);
       fetch(url, ctrl ? { signal: ctrl.signal } : {})
         .then(function (res) { return res.ok ? res.json() : { results: [] }; })
         .then(function (data) {
