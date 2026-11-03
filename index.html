@@ -172,6 +172,14 @@
   .lock-note svg { flex-shrink: 0; margin-top: 2px; }
   .turnstile-wrap { margin: 4px 0 8px; min-height: 65px; }
   footer { margin-top: 28px; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; }
+  /* Address autocomplete (Geoapify) */
+  .ac-wrap { position: relative; }
+  .ac-list { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 50; margin: 0; padding: 4px; list-style: none; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); max-height: 260px; overflow-y: auto; }
+  .ac-list[hidden] { display: none; }
+  .ac-item { padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 14.5px; line-height: 1.3; }
+  .ac-item .ac-sub { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .ac-item.active, .ac-item:hover { background: var(--notice-bg); }
+  .ac-credit { padding: 6px 10px 2px; font-size: 11px; color: var(--muted); text-align: right; }
 </style>
 </head>
 <body>
@@ -331,7 +339,10 @@
     <p class="screen-desc">Your current home address and the one before it.</p>
     <div class="field">
       <label for="addr">Current street address<span class="req">*</span></label>
-      <input type="text" id="addr" data-req autocomplete="address-line1" maxlength="120">
+      <div class="ac-wrap">
+        <input role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="addrList" type="text" id="addr" data-req autocomplete="address-line1" maxlength="120">
+        <ul class="ac-list" id="addrList" role="listbox" hidden></ul>
+      </div>
       <div class="field-error">Enter your street address.</div>
     </div>
     <div class="field-row">
@@ -363,7 +374,10 @@
       <div class="conditional-inner">
         <div class="field">
           <label for="prevAddr">Previous street address<span class="req">*</span></label>
-          <input type="text" id="prevAddr" data-req maxlength="120">
+          <div class="ac-wrap">
+            <input role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="prevAddrList" type="text" id="prevAddr" data-req maxlength="120">
+            <ul class="ac-list" id="prevAddrList" role="listbox" hidden></ul>
+          </div>
           <div class="field-error">Enter your previous street address.</div>
         </div>
         <div class="field-row">
@@ -537,6 +551,9 @@
   // Bump this whenever the authorization wording changes. It is printed on the signed PDF.
   var DOC_VERSION = 'LaborChex Authorization v2026-09';
   var EMPLOYER = 'Capital City Beverages Inc./F.E.B. Distributing Co., Inc.';
+  // Geoapify API key for address autocomplete (project "Background Check" at myprojects.geoapify.com).
+  // Leave as-is to turn autocomplete off; the form still works without it.
+  var GEOAPIFY_KEY = '410b3de2728645f1a590f06f3ffe0c22';
 
   var STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
 
@@ -648,6 +665,79 @@
   bindToggle('samePrev', 'samePrevLine', 'prevBlock', ['prevAddr', 'prevCity', 'prevState', 'prevZip']);
   bindToggle('noDL', 'noDLLine', 'dlBlock', ['dlName', 'dlNumber', 'dlState']);
   bindToggle('noOtherNames', 'noOtherNamesLine', null, ['otherNames'], function (on) { if (on) $('otherNames').value = ''; });
+
+  /* ================= ADDRESS AUTOCOMPLETE (Geoapify) ================= */
+  function setupAddressAutocomplete(ids) {
+    if (!GEOAPIFY_KEY || GEOAPIFY_KEY.indexOf('PASTE_') === 0) return;
+    var input = $(ids.addr), list = $(ids.addr + 'List');
+    var results = [], active = -1, timer = null, ctrl = null, lastQuery = '';
+    input.setAttribute('autocomplete', 'off');
+
+    function close() {
+      list.hidden = true; list.innerHTML = ''; results = []; active = -1;
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
+    }
+    function esc(t) { var d = document.createElement('div'); d.textContent = t || ''; return d.innerHTML; }
+    function render() {
+      if (!results.length) { close(); return; }
+      list.innerHTML = results.map(function (r, i) {
+        var sub = [r.city, r.state_code, r.postcode].filter(Boolean).join(', ');
+        return '<li class="ac-item' + (i === active ? ' active' : '') + '" role="option" id="' + ids.addr + 'Opt' + i + '" data-i="' + i + '">' +
+          esc(r.address_line1) + '<span class="ac-sub">' + esc(sub) + '</span></li>';
+      }).join('') + '<li class="ac-credit" aria-hidden="true">Powered by Geoapify</li>';
+      list.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+      if (active >= 0) input.setAttribute('aria-activedescendant', ids.addr + 'Opt' + active);
+    }
+    function pick(i) {
+      var r = results[i]; if (!r) return;
+      var street = [r.housenumber, r.street].filter(Boolean).join(' ') || r.address_line1 || '';
+      input.value = street.slice(0, 120);
+      if (r.city || r.town || r.village) $(ids.city).value = (r.city || r.town || r.village).slice(0, 60);
+      if (r.state_code && STATES.indexOf(r.state_code.toUpperCase()) !== -1) $(ids.state).value = r.state_code.toUpperCase();
+      if (r.postcode) $(ids.zip).value = String(r.postcode).slice(0, 10);
+      [input, $(ids.city), $(ids.state), $(ids.zip)].forEach(clearInvalid);
+      close();
+    }
+    function search(q) {
+      if (ctrl) ctrl.abort();
+      ctrl = ('AbortController' in window) ? new AbortController() : null;
+      var url = 'https://api.geoapify.com/v1/geocode/autocomplete?format=json&limit=5&type=street,amenity,building' +
+        '&filter=countrycode:us&bias=countrycode:us&lang=en&text=' + encodeURIComponent(q) + '&apiKey=' + encodeURIComponent(GEOAPIFY_KEY);
+      fetch(url, ctrl ? { signal: ctrl.signal } : {})
+        .then(function (res) { return res.ok ? res.json() : { results: [] }; })
+        .then(function (data) {
+          if (input.value.trim() !== q || document.activeElement !== input) return;
+          results = (data.results || []).filter(function (r) { return r.housenumber || r.address_line1; });
+          active = -1; render();
+        })
+        .catch(function () { /* network/abort: just no suggestions */ });
+    }
+
+    input.addEventListener('input', function () {
+      var q = input.value.trim();
+      clearTimeout(timer);
+      if (q.length < 4) { close(); return; }
+      if (q === lastQuery) return;
+      timer = setTimeout(function () { lastQuery = q; search(q); }, 300);
+    });
+    input.addEventListener('keydown', function (e) {
+      if (list.hidden) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); active = (active + 1) % results.length; render(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); active = active <= 0 ? results.length - 1 : active - 1; render(); }
+      else if (e.key === 'Enter' && active >= 0) { e.preventDefault(); pick(active); }
+      else if (e.key === 'Escape') { close(); }
+    });
+    // mousedown so the pick happens before the input loses focus
+    list.addEventListener('mousedown', function (e) {
+      var li = e.target.closest('.ac-item'); if (!li) return;
+      e.preventDefault(); pick(+li.getAttribute('data-i'));
+    });
+    input.addEventListener('blur', function () { setTimeout(close, 120); });
+  }
+  setupAddressAutocomplete({ addr: 'addr', city: 'city', state: 'state', zip: 'zip' });
+  setupAddressAutocomplete({ addr: 'prevAddr', city: 'prevCity', state: 'prevState', zip: 'prevZip' });
 
   /* ================= VALIDATION ================= */
   function fieldOf(el) { return el.closest('.field'); }
